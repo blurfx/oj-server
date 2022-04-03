@@ -31,3 +31,7 @@ docker pull mysql:8.0 --platform=x86_64
 
 마지막 마이그레이션 롤백
 - `make goose env=local c=down`
+
+### Server
+
+`make run`으로 서버를 실행합니다.
