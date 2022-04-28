@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/orderoutofchaos/oj-server/dao"
+	"github.com/orderoutofchaos/oj-server/internal/dao"
 	"golang.org/x/crypto/scrypt"
 	"net/http"
 )
