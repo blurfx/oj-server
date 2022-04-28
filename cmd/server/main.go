@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/orderoutofchaos/oj-server/internal/dao"
 	"github.com/orderoutofchaos/oj-server/internal/datasource/mysql"
-	handler2 "github.com/orderoutofchaos/oj-server/internal/handler"
+	"github.com/orderoutofchaos/oj-server/internal/handler"
 	"os"
 )
 
@@ -39,9 +41,9 @@ func main() {
 	secret := ""
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(secret))))
-	e.Validator = &handler2.RequestValidator{
+	e.Validator = &handler.RequestValidator{
 		Validator: validator.New(),
 	}
-	handler2.InitV1Handler(e)
+	handler.InitV1Handler(e)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", os.Getenv("PORT"))))
 }
