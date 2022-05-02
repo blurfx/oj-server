@@ -10,6 +10,8 @@ import (
 func TestSq(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
 
+	defer db.Close()
+
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -45,15 +47,47 @@ func TestSq(t *testing.T) {
 			t.Error(err)
 			t.FailNow()
 		}
+		err = rows.Scan(&id, &name, &isVerified, &createdAt)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
 		err = rows.ScanStruct(&user)
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
 		}
 		t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
-		t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "StructScan", user.Id, user.Username, user.IsVerified, user.CreatedAt)
+		t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
 		if id != user.Id || name != user.Username || isVerified.Bool != user.IsVerified.Bool || createdAt != user.CreatedAt {
 			t.Errorf("failed to assertion.\nId: expected='%v' given='%v'\nName: expected='%s' given='%s'", id, user.Id, name, user.Username)
+			t.FailNow()
 		}
+	}
+
+	var (
+		id         int
+		name       string
+		isVerified sql.NullBool
+		createdAt  time.Time
+		user       User
+	)
+	row := sq.QueryRow("SELECT * FROM user ORDER BY id")
+	err = row.Scan(&id, &name, &isVerified, &createdAt)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	row = sq.QueryRow("SELECT * FROM user ORDER BY id")
+	err = row.ScanStruct(&user)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
+	t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
+	if id != user.Id || name != user.Username || isVerified.Bool != user.IsVerified.Bool || createdAt != user.CreatedAt {
+		t.Errorf("failed to assertion.\nId: expected='%v' given='%v'\nName: expected='%s' given='%s'", id, user.Id, name, user.Username)
+		t.FailNow()
 	}
 }

@@ -9,35 +9,15 @@ import (
 
 const fieldTag = "db"
 
-type DB struct {
-	*sql.DB
-	instance *sql.DB
-}
-
-func NewDb(db *sql.DB) *DB {
-	return &DB{
-		DB:       db,
-		instance: db,
-	}
+type field struct {
+	Name    string
+	Type    reflect.Type
+	Indices []int
 }
 
 type Rows struct {
 	*sql.Rows
 	fields map[string]*field
-}
-
-func (db *DB) Query(query string, args ...any) (*Rows, error) {
-	rows, err := db.instance.Query(query, args...)
-	return &Rows{
-		Rows:   rows,
-		fields: make(map[string]*field),
-	}, err
-}
-
-type field struct {
-	Name    string
-	Type    reflect.Type
-	Indices []int
 }
 
 func (r *Rows) findFields(t reflect.Type) error {
@@ -154,4 +134,59 @@ func (r *Rows) ScanStruct(dest interface{}) error {
 		}
 	}
 	return nil
+}
+
+type Row struct {
+	rows *Rows
+	err  error
+}
+
+func (r *Row) Scan(dest ...any) error {
+	defer r.rows.Close()
+	if !r.rows.Next() {
+		if r.rows.Err() != nil {
+			return r.rows.Err()
+		}
+		return sql.ErrNoRows
+	}
+	return r.rows.Scan(dest...)
+}
+
+func (r *Row) ScanStruct(dest interface{}) error {
+	defer r.rows.Close()
+	if !r.rows.Next() {
+		if r.rows.Err() != nil {
+			return r.rows.Err()
+		}
+		return sql.ErrNoRows
+	}
+	return r.rows.ScanStruct(dest)
+}
+
+type DB struct {
+	*sql.DB
+	instance *sql.DB
+}
+
+func NewDb(db *sql.DB) *DB {
+	return &DB{
+		DB:       db,
+		instance: db,
+	}
+}
+
+func (db *DB) Query(query string, args ...any) (*Rows, error) {
+	rows, err := db.instance.Query(query, args...)
+	return &Rows{
+		Rows:   rows,
+		fields: make(map[string]*field),
+	}, err
+}
+
+func (db *DB) QueryRow(query string, args ...any) *Row {
+	rows, err := db.Query(query, args...)
+	return &Row{
+		rows: rows,
+		err:  err,
+	}
 }
