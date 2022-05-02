@@ -1,36 +1,36 @@
 package dao
 
 import (
-    "database/sql"
+	"github.com/orderoutofchaos/oj-server/pkg/sq"
 )
 
 var repo Repository
 
 type Repository interface {
-    Writer() *sql.DB
-    Reader() *sql.DB
+	Writer() *sq.DB
+	Reader() *sq.DB
 }
 
 type repositoryImpl struct {
-    writer *sql.DB
-    reader *sql.DB
+	writer *sq.DB
+	reader *sq.DB
 }
 
-func (r repositoryImpl) Writer() *sql.DB {
-    return r.writer
+func (r repositoryImpl) Writer() *sq.DB {
+	return r.writer
 }
 
-func (r repositoryImpl) Reader() *sql.DB {
-    return r.reader
+func (r repositoryImpl) Reader() *sq.DB {
+	return r.reader
 }
 
-func InitRepo(reader *sql.DB, writer *sql.DB) {
-    repo = repositoryImpl{
-        writer: writer,
-        reader: reader,
-    }
+func InitRepo(reader *sq.DB, writer *sq.DB) {
+	repo = repositoryImpl{
+		writer: writer,
+		reader: reader,
+	}
 }
 
 func GetRepo() Repository {
-    return repo
+	return repo
 }
