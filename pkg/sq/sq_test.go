@@ -7,31 +7,74 @@ import (
 	"time"
 )
 
-func TestSq(t *testing.T) {
+type testUser struct {
+	Id         int          `db:"id"`
+	Username   string       `db:"name"`
+	IsVerified sql.NullBool `db:"verified"`
+	CreatedAt  time.Time    `db:"created_at"`
+}
+
+func createTestDb() *DB {
 	db, err := sql.Open("sqlite3", ":memory:")
-
-	defer db.Close()
-
 	if err != nil {
-		t.Error(err)
-		t.FailNow()
+		panic(err)
 	}
 
 	sq := NewDb(db)
-	sq.Exec("CREATE TABLE user (`id` INT NOT NULL PRIMARY KEY, `name` varchar(255) NOT NULL, `verified` BOOLEAN NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)")
-	sq.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'User One', '1996-02-21 12:34')")
-	sq.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
-	rows, err := sq.Query("SELECT * FROM user ORDER BY id")
+
+	return sq
+}
+
+func TestQueryRow(t *testing.T) {
+	db := createTestDb()
+	defer db.Close()
+
+	db.Exec("CREATE TABLE user (`id` INT NOT NULL PRIMARY KEY, `name` varchar(255) NOT NULL, `verified` BOOLEAN NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'testUser One', '1996-02-21 12:34')")
+	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
+
+	var (
+		id         int
+		name       string
+		isVerified sql.NullBool
+		createdAt  time.Time
+		user       testUser
+	)
+
+	row := db.QueryRow("SELECT * FROM user ORDER BY id")
+	err := row.Scan(&id, &name, &isVerified, &createdAt)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	row = db.QueryRow("SELECT * FROM user ORDER BY id")
+	err = row.ScanStruct(&user)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
 
-	type User struct {
-		Id         int          `db:"id"`
-		Username   string       `db:"name"`
-		IsVerified sql.NullBool `db:"verified"`
-		CreatedAt  time.Time    `db:"created_at"`
+	if id != user.Id || name != user.Username || isVerified.Bool != user.IsVerified.Bool || createdAt != user.CreatedAt {
+		t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
+		t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
+		t.Errorf("failed to assertion.\nId: expected='%v' given='%v'\nName: expected='%s' given='%s'", id, user.Id, name, user.Username)
+		t.FailNow()
+	}
+}
+
+func TestQuery(t *testing.T) {
+	db := createTestDb()
+
+	defer db.Close()
+
+	db.Exec("CREATE TABLE user (`id` INT NOT NULL PRIMARY KEY, `name` varchar(255) NOT NULL, `verified` BOOLEAN NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'testUser One', '1996-02-21 12:34')")
+	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
+
+	rows, err := db.Query("SELECT * FROM user ORDER BY id")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
 	}
 
 	for rows.Next() {
@@ -40,54 +83,31 @@ func TestSq(t *testing.T) {
 			name       string
 			isVerified sql.NullBool
 			createdAt  time.Time
-			user       User
+			user       testUser
 		)
+
 		err := rows.Scan(&id, &name, &isVerified, &createdAt)
 		if err != nil {
 			t.Error(err)
-			t.FailNow()
+			return
 		}
 		err = rows.Scan(&id, &name, &isVerified, &createdAt)
 		if err != nil {
 			t.Error(err)
-			t.FailNow()
+			return
 		}
 		err = rows.ScanStruct(&user)
 		if err != nil {
 			t.Error(err)
-			t.FailNow()
+			return
 		}
-		t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
-		t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
+
 		if id != user.Id || name != user.Username || isVerified.Bool != user.IsVerified.Bool || createdAt != user.CreatedAt {
+			t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
+			t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
 			t.Errorf("failed to assertion.\nId: expected='%v' given='%v'\nName: expected='%s' given='%s'", id, user.Id, name, user.Username)
-			t.FailNow()
+			return
 		}
 	}
 
-	var (
-		id         int
-		name       string
-		isVerified sql.NullBool
-		createdAt  time.Time
-		user       User
-	)
-	row := sq.QueryRow("SELECT * FROM user ORDER BY id")
-	err = row.Scan(&id, &name, &isVerified, &createdAt)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	row = sq.QueryRow("SELECT * FROM user ORDER BY id")
-	err = row.ScanStruct(&user)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	t.Logf("[%10v] id: %v, name: %v, verified:%v(valid:%v), created_at: %v\n", "Scan", id, name, isVerified.Bool, isVerified.Valid, createdAt)
-	t.Logf("[%10v] id: %v, name: %v, verified:%v, created_at:%v\n", "ScanStruct", user.Id, user.Username, user.IsVerified, user.CreatedAt)
-	if id != user.Id || name != user.Username || isVerified.Bool != user.IsVerified.Bool || createdAt != user.CreatedAt {
-		t.Errorf("failed to assertion.\nId: expected='%v' given='%v'\nName: expected='%s' given='%s'", id, user.Id, name, user.Username)
-		t.FailNow()
-	}
 }
