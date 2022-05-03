@@ -26,7 +26,7 @@ func createTestDb() *DB {
 	return sq
 }
 
-func TestQueryRow(t *testing.T) {
+func TestQueryRow_Scan(t *testing.T) {
 	db := createTestDb()
 
 	defer db.Close()
@@ -34,14 +34,23 @@ func TestQueryRow(t *testing.T) {
 	t1, _ := time.Parse("2006-01-02 15:04", "1996-02-21 12:34")
 
 	db.Exec("CREATE TABLE user (`id` INT NOT NULL PRIMARY KEY, `name` varchar(255) NOT NULL, `verified` BOOLEAN NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+
+	var user testUser
+
+	row := db.QueryRow("SELECT * FROM user ORDER BY id")
+	err := row.Scan(&user.Id, &user.Username, &user.IsVerified, &user.CreatedAt)
+	if err != sql.ErrNoRows {
+		t.Error(err)
+		return
+	}
+
 	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'User One', '1996-02-21 12:34')")
 	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
 
-	var user testUser
 	expected := testUser{1, "User One", sql.NullBool{false, false}, t1, 0}
 
-	row := db.QueryRow("SELECT * FROM user ORDER BY id")
-	err := row.ScanStruct(&user)
+	row = db.QueryRow("SELECT * FROM user ORDER BY id")
+	err = row.Scan(&user.Id, &user.Username, &user.IsVerified, &user.CreatedAt)
 	if err != nil {
 		t.Error(err)
 		return
@@ -55,7 +64,45 @@ func TestQueryRow(t *testing.T) {
 	}
 }
 
-func TestQuery(t *testing.T) {
+func TestQueryRow_ScanStruct(t *testing.T) {
+	db := createTestDb()
+
+	defer db.Close()
+
+	t1, _ := time.Parse("2006-01-02 15:04", "1996-02-21 12:34")
+
+	db.Exec("CREATE TABLE user (`id` INT NOT NULL PRIMARY KEY, `name` varchar(255) NOT NULL, `verified` BOOLEAN NULL, `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+
+	var user testUser
+
+	row := db.QueryRow("SELECT * FROM user ORDER BY id")
+	err := row.ScanStruct(&user)
+	if err != sql.ErrNoRows {
+		t.Error(err)
+		return
+	}
+
+	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'User One', '1996-02-21 12:34')")
+	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
+
+	expected := testUser{1, "User One", sql.NullBool{false, false}, t1, 0}
+
+	row = db.QueryRow("SELECT * FROM user ORDER BY id")
+	err = row.ScanStruct(&user)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if expected != user {
+		t.Error("failed to assertion.")
+		t.Logf("[%10v] %v\n", "Expected", expected)
+		t.Logf("[%10v] %v\n", "Actual", user)
+		return
+	}
+}
+
+func TestQuery_ScanStruct(t *testing.T) {
 	db := createTestDb()
 
 	defer db.Close()
