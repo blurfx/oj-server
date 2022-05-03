@@ -9,9 +9,23 @@ import (
 
 type testUser struct {
 	Id              int          `db:"id"`
-	Username        string       `db:"name"`
+	Username        *string      `db:"name"`
 	IsVerified      sql.NullBool `db:"verified"`
 	CreatedAt       time.Time    `db:"created_at"`
+	DeprecatedField int
+}
+
+func (u *testUser) diff(user testUser) bool {
+	return user.Id != u.Id ||
+		*user.Username != *u.Username ||
+		user.IsVerified.Bool != u.IsVerified.Bool ||
+		user.CreatedAt != u.CreatedAt
+}
+
+type invalidTestUser struct {
+	Id              int       `db:"id"`
+	Username        *string   `db:"name"`
+	CreatedAt       time.Time `db:"created_at"`
 	DeprecatedField int
 }
 
@@ -47,7 +61,8 @@ func TestQueryRow_Scan(t *testing.T) {
 	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'User One', '1996-02-21 12:34')")
 	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
 
-	expected := testUser{1, "User One", sql.NullBool{false, false}, t1, 0}
+	name := "User One"
+	expected := testUser{1, &name, sql.NullBool{false, false}, t1, 0}
 
 	row = db.QueryRow("SELECT * FROM user ORDER BY id")
 	err = row.Scan(&user.Id, &user.Username, &user.IsVerified, &user.CreatedAt)
@@ -56,7 +71,7 @@ func TestQueryRow_Scan(t *testing.T) {
 		return
 	}
 
-	if expected != user {
+	if expected.diff(user) {
 		t.Error("failed to assertion.")
 		t.Logf("[%10v] %v\n", "Expected", expected)
 		t.Logf("[%10v] %v\n", "Actual", user)
@@ -85,7 +100,8 @@ func TestQueryRow_ScanStruct(t *testing.T) {
 	db.Exec("INSERT INTO `user` (`id`, `name`, `created_at`) VALUES(1, 'User One', '1996-02-21 12:34')")
 	db.Exec("INSERT INTO `user` (`id`, `name`, `verified`) VALUES(2, '사용자 2', 1)")
 
-	expected := testUser{1, "User One", sql.NullBool{false, false}, t1, 0}
+	name := "User One"
+	expected := testUser{1, &name, sql.NullBool{false, false}, t1, 0}
 
 	row = db.QueryRow("SELECT * FROM user ORDER BY id")
 	err = row.ScanStruct(&user)
@@ -94,7 +110,7 @@ func TestQueryRow_ScanStruct(t *testing.T) {
 		return
 	}
 
-	if expected != user {
+	if expected.diff(user) {
 		t.Error("failed to assertion.")
 		t.Logf("[%10v] %v\n", "Expected", expected)
 		t.Logf("[%10v] %v\n", "Actual", user)
@@ -120,13 +136,34 @@ func TestQuery_ScanStruct(t *testing.T) {
 		t.FailNow()
 	}
 
+	names := []string{"User One", "사용자 2"}
 	expected := []testUser{
-		{1, "User One", sql.NullBool{false, false}, t1, 0},
-		{2, "사용자 2", sql.NullBool{true, true}, t2, 0},
+		{1, &names[0], sql.NullBool{false, false}, t1, 0},
+		{2, &names[1], sql.NullBool{true, true}, t2, 0},
 	}
 
 	for i := 0; rows.Next(); i++ {
 		var user testUser
+		var invalidUser invalidTestUser
+		var invalidDest int
+
+		err = rows.ScanStruct(user)
+		if err == nil {
+			t.Error("Destination must be a pointer")
+			return
+		}
+
+		err = rows.ScanStruct(&invalidDest)
+		if err == nil {
+			t.Error("Destination must be a pointer")
+			return
+		}
+
+		err = rows.ScanStruct(&invalidUser)
+		if err == nil {
+			t.Error("Missing destination field")
+			return
+		}
 
 		err = rows.ScanStruct(&user)
 		if err != nil {
@@ -134,12 +171,11 @@ func TestQuery_ScanStruct(t *testing.T) {
 			return
 		}
 
-		if expected[i] != user {
+		if expected[i].diff(user) {
 			t.Error("failed to assertion.")
 			t.Logf("[%10v] %v\n", "Expected", expected[i])
 			t.Logf("[%10v] %v\n", "Actual", user)
 			return
 		}
 	}
-
 }
