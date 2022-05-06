@@ -39,7 +39,13 @@ func V1Login(req *LoginRequest, c echo.Context) Response {
 			panic(err)
 		}
 
-		sess, _ := session.Get("session", c)
+		sess, err := session.Get("session", c)
+		if err != nil {
+			return Response{
+				Code:  http.StatusInternalServerError,
+				Error: ErrSession,
+			}
+		}
 		sess.Options = &sessions.Options{
 			Path:     "/",
 			MaxAge:   86400 * 7,
@@ -57,5 +63,26 @@ func V1Login(req *LoginRequest, c echo.Context) Response {
 			Code:  http.StatusUnauthorized,
 			Error: ErrInvalidCredential,
 		}
+	}
+}
+
+type LogoutRequest struct{}
+
+func V1Logout(_ *LogoutRequest, c echo.Context) Response {
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return Response{
+			Code:  http.StatusInternalServerError,
+			Error: ErrSession,
+		}
+	}
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	}
+	sess.Save(c.Request(), c.Response())
+	return Response{
+		Code: http.StatusOK,
 	}
 }

@@ -8,4 +8,6 @@ const (
 	ErrValidationFail = 40402
 
 	ErrInvalidCredential = 41000
+
+	ErrSession = 45000
 )
