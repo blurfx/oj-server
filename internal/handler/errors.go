@@ -10,4 +10,6 @@ const (
 	ErrInvalidCredential = 41000
 
 	ErrSession = 45000
+
+	ErrInternal = 50000
 )

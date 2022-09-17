@@ -53,7 +53,12 @@ func V1Login(req *LoginRequest, c echo.Context) Response {
 		}
 		sess.Values["user_id"] = id
 		sess.Values["username"] = username
-		sess.Save(c.Request(), c.Response())
+		if err := sess.Save(c.Request(), c.Response()); err != nil {
+			return Response{
+				Code:  http.StatusInternalServerError,
+				Error: ErrInternal,
+			}
+		}
 
 		return Response{
 			Code: http.StatusOK,
@@ -81,7 +86,12 @@ func V1Logout(_ *LogoutRequest, c echo.Context) Response {
 		MaxAge:   -1,
 		HttpOnly: true,
 	}
-	sess.Save(c.Request(), c.Response())
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return Response{
+			Code:  http.StatusInternalServerError,
+			Error: ErrInternal,
+		}
+	}
 	return Response{
 		Code: http.StatusOK,
 	}
