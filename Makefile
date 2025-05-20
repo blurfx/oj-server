@@ -1,14 +1,16 @@
 run:
 	go run cmd/server/main.go
 
-db:
+docker-up:
 	docker-compose -f .docker/docker-compose.dev.yaml up --build -d
+docker-down:
+	docker-compose -f .docker/docker-compose.dev.yaml down
 
 dbinit:
-	mysql -h 127.0.0.1 -u root -p < tools/init/db.sql
+	psql "postgresql://judge_admin:judge_pass@localhost:5432/postgres" -f tools/init/db.sql
 
 goose:
 ifeq ($(env), $(filter $(env),local test))
 	db=onlinejudge; \
-	goose -dir tools/migrations mysql root:oj-root-pass@tcp\(localhost:3306\)/$$db?parseTime=true $(c)
+	goose -dir tools/migrations postgres "postgresql://judge_admin:judge_pass@localhost:5432/$$db" $(c)
 endif

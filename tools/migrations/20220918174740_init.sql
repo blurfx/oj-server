@@ -1,78 +1,68 @@
 -- +goose Up
-CREATE TABLE IF NOT EXISTS `user`
+CREATE TABLE IF NOT EXISTS "user"
 (
-    `id`                  BIGINT    AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `username`            VARCHAR(20) NOT NULL,
-    `password`            VARCHAR(255) NOT NULL,
-    `last_login_dt`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `create_dt`           DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `delete_dt`           DATETIME,
+    id                  BIGSERIAL PRIMARY KEY,
+    username            VARCHAR(20) NOT NULL,
+    password            VARCHAR(255) NOT NULL,
+    last_login_dt       TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    create_dt           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    delete_dt           TIMESTAMP,
 
-    CONSTRAINT `user_username_uniq` UNIQUE (`username`),
+    CONSTRAINT user_username_uniq UNIQUE (username)
+);
 
-    INDEX `user_username` (`username`)
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4;
+CREATE INDEX user_username ON "user" (username);
 
-CREATE TABLE IF NOT EXISTS `problem`
+CREATE TABLE IF NOT EXISTS problem
 (
-    `id`                BIGINT NOT NULL PRIMARY KEY,
-    `title`             VARCHAR(255) NOT NULL,
-    `description`       TEXT NOT NULL,
-    `spoiler`           TEXT NOT NULL,
-    `time_limit`        BIGINT NOT NULL,
-    `memory_limit`      BIGINT NOT NULL,
-    `create_dt`         DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `delete_dt`         DATETIME
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4;
+    id                BIGINT PRIMARY KEY,
+    title             VARCHAR(255) NOT NULL,
+    description       TEXT NOT NULL,
+    spoiler           TEXT,
+    time_limit        BIGINT NOT NULL,
+    memory_limit      BIGINT NOT NULL,
+    create_dt         TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    delete_dt         TIMESTAMP
+);
 
-CREATE TABLE IF NOT EXISTS `problem_testcase`
+CREATE TABLE IF NOT EXISTS problem_testcase
 (
-    `id`                BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `problem_id`        BIGINT NOT NULL,
-    `input_filepath`    VARCHAR(255) NOT NULL,
-    `output_filepath`   VARCHAR(255) NOT NULL,
+    id                BIGSERIAL PRIMARY KEY,
+    problem_id        BIGINT NOT NULL,
+    input_filepath    VARCHAR(255) NOT NULL,
+    output_filepath   VARCHAR(255) NOT NULL,
 
-    CONSTRAINT `problem_testcase_problem_id_fk` FOREIGN KEY (`problem_id`) REFERENCES `problem` (`id`)
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4;
+    CONSTRAINT problem_testcase_problem_id_fk FOREIGN KEY (problem_id) REFERENCES problem (id)
+);
 
-CREATE TABLE IF NOT EXISTS `language`
+CREATE TABLE IF NOT EXISTS language
 (
-    `id`            BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `name`          VARCHAR(20) NOT NULL,
-    `create_dt`     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    `delete_dt`     DATETIME
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4;
+    id            BIGSERIAL PRIMARY KEY,
+    name          VARCHAR(20) NOT NULL,
+    create_dt     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    delete_dt     TIMESTAMP
+);
 
-CREATE TABLE IF NOT EXISTS `submission`
+CREATE TABLE IF NOT EXISTS submission
 (
-    `id`            BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    `user_id`       BIGINT NOT NULL,
-    `problem_id`    BIGINT NOT NULL,
-    `language_id`   BIGINT NOT NULL,
-    `code`          TEXT NOT NULL,
-    `time_limit`    INTEGER,
-    `memory_limit`  INTEGER,
-    `status`        VARCHAR(20) NOT NULL,
-    CONSTRAINT `submission_language_id_fk` FOREIGN KEY (`language_id`) REFERENCES `language` (`id`),
-    `visibility`    VARCHAR(10) NOT NULL,
-    `create_dt`     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    id            BIGSERIAL PRIMARY KEY,
+    user_id       BIGINT NOT NULL,
+    problem_id    BIGINT NOT NULL,
+    language_id   BIGINT NOT NULL,
+    code          TEXT NOT NULL,
+    time_limit    INTEGER,
+    memory_limit  INTEGER,
+    status        VARCHAR(20) NOT NULL,
+    visibility    VARCHAR(10) NOT NULL,
+    create_dt     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-    CONSTRAINT `submission_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
-    CONSTRAINT `submission_problem_id_fk` FOREIGN KEY (`problem_id`) REFERENCES `problem` (`id`),
+    CONSTRAINT submission_language_id_fk FOREIGN KEY (language_id) REFERENCES language (id),
+    CONSTRAINT submission_user_id_fk FOREIGN KEY (user_id) REFERENCES "user" (id),
+    CONSTRAINT submission_problem_id_fk FOREIGN KEY (problem_id) REFERENCES problem (id)
+);
 
-    INDEX `submission_user_id` (`user_id`),
-    INDEX `submission_problem_id` (`problem_id`)
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4;
+CREATE INDEX submission_user_id ON submission (user_id);
+CREATE INDEX submission_problem_id ON submission (problem_id);
 
 -- +goose Down
-DROP TABLE language, submission, problem_testcase, problem, user;
+DROP TABLE IF EXISTS submission, language, problem_testcase, problem, "user";

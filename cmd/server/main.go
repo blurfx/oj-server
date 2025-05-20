@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
@@ -9,9 +11,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/orderoutofchaos/oj-server/internal/dao"
-	"github.com/orderoutofchaos/oj-server/internal/datasource/mysql"
+	"github.com/orderoutofchaos/oj-server/internal/datasource/postgres"
 	"github.com/orderoutofchaos/oj-server/internal/handler"
-	"os"
 )
 
 func main() {
@@ -19,22 +20,22 @@ func main() {
 		panic(err)
 	}
 
-	readerConfig := mysql.Config{
+	readerConfig := postgres.Config{
 		User:   os.Getenv("READER_DB_USER"),
 		Passwd: os.Getenv("READER_DB_PASS"),
 		Host:   os.Getenv("READER_DB_HOST"),
 		Port:   os.Getenv("READER_DB_PORT"),
 		DBName: os.Getenv("READER_DB_NAME"),
 	}
-	reader := mysql.NewMySQL(readerConfig)
-	writerConfig := mysql.Config{
+	reader := postgres.NewPostgres(readerConfig)
+	writerConfig := postgres.Config{
 		User:   os.Getenv("WRITER_DB_USER"),
 		Passwd: os.Getenv("WRITER_DB_PASS"),
 		Host:   os.Getenv("WRITER_DB_HOST"),
 		Port:   os.Getenv("WRITER_DB_PORT"),
 		DBName: os.Getenv("WRITER_DB_NAME"),
 	}
-	writer := mysql.NewMySQL(writerConfig)
+	writer := postgres.NewPostgres(writerConfig)
 	dao.InitRepo(reader, writer)
 
 	e := echo.New()

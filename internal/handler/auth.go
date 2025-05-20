@@ -2,12 +2,13 @@ package handler
 
 import (
 	"encoding/hex"
+	"net/http"
+
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/orderoutofchaos/oj-server/internal/dao"
 	"golang.org/x/crypto/scrypt"
-	"net/http"
 )
 
 type LoginRequest struct {
@@ -24,7 +25,7 @@ func encodeHash(value string) string {
 
 func V1Login(req *LoginRequest, c echo.Context) Response {
 	repo := dao.GetRepo()
-	rows, err := repo.Reader().Query("SELECT id, username FROM user WHERE username = ? AND password = ?", req.Username, encodeHash(req.Password))
+	rows, err := repo.Reader().Query("SELECT id, username FROM user WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
 	if err != nil {
 		panic(err)
 	}

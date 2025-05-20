@@ -2,10 +2,11 @@ version: '3'
 
 services:
   db:
-    image: mysql:8.0
+    image: postgres:17
     environment:
-      - MYSQL_ROOT_PASSWORD=oj-root-pass
+      - POSTGRES_USER=judge_admin
+      - POSTGRES_PASSWORD=judge_pass
     volumes:
-      - './.localdb:/var/lib/mysql'
+      - './.localdb:/var/lib/postgres'
     ports:
-      - 3306:3306
+      - 5432:5432
