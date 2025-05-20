@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 type Response struct {
@@ -17,22 +18,24 @@ type response struct {
 	Error int         `json:"error"`
 }
 
-func BaseHandler[T interface{}](req T, handler func(*T, echo.Context) Response) func(c echo.Context) error {
+func BaseHandler[T any](handler func(echo.Context, *T) Response, req *T) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, response{
-				Data:  nil,
-				Error: ErrBadRequest,
-			})
-		}
-		if err := c.Validate(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, response{
-				Data:  nil,
-				Error: ErrValidationFail,
-			})
+		if req != nil {
+			if err := c.Bind(req); err != nil {
+				return c.JSON(http.StatusBadRequest, response{
+					Data:  nil,
+					Error: ErrBadRequest,
+				})
+			}
+			if err := c.Validate(req); err != nil {
+				return c.JSON(http.StatusBadRequest, response{
+					Data:  nil,
+					Error: ErrValidationFail,
+				})
+			}
 		}
 
-		resp := handler(&req, c)
+		resp := handler(c, req)
 		return c.JSON(resp.Code, response{
 			Data:  resp.Data,
 			Error: resp.Error,

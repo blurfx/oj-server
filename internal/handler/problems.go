@@ -17,7 +17,7 @@ type ProblemListItem struct {
 	Title string `db:"title" json:"title"`
 }
 
-func V1GetProblems(req *V1GetProblemsRequest, c echo.Context) Response {
+func V1GetProblems(c echo.Context, req *V1GetProblemsRequest) Response {
 	repo := dao.GetRepo()
 	if req.Size == 0 {
 		req.Size = 10
@@ -59,7 +59,7 @@ type Problem struct {
 	MemoryLimit uint   `db:"memory_limit" json:"memory_limit"`
 }
 
-func V1GetProblem(_ *struct{}, c echo.Context) Response {
+func V1GetProblem(c echo.Context, _ *struct{}) Response {
 	repo := dao.GetRepo()
 	id := c.Param("id")
 	rows, err := repo.Reader().Query("SELECT id, title, description, spoiler, time_limit, memory_limit FROM problem WHERE id = $1", id)

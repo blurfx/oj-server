@@ -23,7 +23,7 @@ func encodeHash(value string) string {
 	return hex.EncodeToString(key)
 }
 
-func V1Login(req *LoginRequest, c echo.Context) Response {
+func V1Login(c echo.Context, req *LoginRequest) Response {
 	repo := dao.GetRepo()
 	rows, err := repo.Reader().Query("SELECT id, username FROM user WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
 	if err != nil {
@@ -72,9 +72,7 @@ func V1Login(req *LoginRequest, c echo.Context) Response {
 	}
 }
 
-type LogoutRequest struct{}
-
-func V1Logout(_ *LogoutRequest, c echo.Context) Response {
+func V1Logout(c echo.Context, _ *struct{}) Response {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		return Response{
