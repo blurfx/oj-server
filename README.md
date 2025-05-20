@@ -5,20 +5,15 @@
 ### Prerequisites
 
 - Docker and docker-compose
-- Golang 1.18+
+- Golang 1.23+
 - [goose](https://github.com/pressly/goose)
 
 ### Database
 
-**`x86_64` 아키텍쳐 환경이 아닌 경우에는 따로 mysql 이미지를 내려받아야합니다.**
-
+```sh
+make docker-up
+make dbinit
 ```
-docker pull mysql:8.0 --platform=x86_64
-```
-
-1. `make localdb`로 로컬 데이터베이스 컨테이너를 실행합니다.
-2. `mysql -uroot -p -h 127.0.0.1 onlinejudge < tools/ddl/init.sql` 명령어로 기본 데이터베이스 스키마를 생성합니다.
-2. `mysql -uroot -p -h 127.0.0.1 onlinejudge < tools/ddl/table.sql` 명령어로 테이블을 생성합니다.
 
 #### Database Migration
 
@@ -34,4 +29,4 @@ docker pull mysql:8.0 --platform=x86_64
 
 ### Server
 
-`make run`으로 서버를 실행합니다.
+[`air`](https://github.com/air-verse/air) 또는 `make run`으로 서버를 실행합니다.
