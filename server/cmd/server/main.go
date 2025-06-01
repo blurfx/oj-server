@@ -39,9 +39,8 @@ func main() {
 	dao.InitRepo(reader, writer)
 
 	e := echo.New()
-	secret := ""
 	e.Use(middleware.Logger())
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(secret))))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))))
 	e.Validator = &handler.RequestValidator{
 		Validator: validator.New(),
 	}

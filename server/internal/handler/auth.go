@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/hex"
+	"log"
 	"net/http"
 
 	"github.com/blurfx/fxoj/internal/dao"
@@ -25,7 +26,7 @@ func encodeHash(value string) string {
 
 func V1Login(c echo.Context, req *LoginRequest) Response {
 	repo := dao.GetRepo()
-	rows, err := repo.Reader().Query("SELECT id, username FROM user WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
+	rows, err := repo.Reader().Query("SELECT id, username FROM users WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
 	if err != nil {
 		panic(err)
 	}
@@ -55,6 +56,7 @@ func V1Login(c echo.Context, req *LoginRequest) Response {
 		sess.Values["user_id"] = id
 		sess.Values["username"] = username
 		if err := sess.Save(c.Request(), c.Response()); err != nil {
+			log.Printf("auth login: %v", err)
 			return Response{
 				Code:  http.StatusInternalServerError,
 				Error: ErrInternal,
@@ -86,11 +88,35 @@ func V1Logout(c echo.Context, _ *struct{}) Response {
 		HttpOnly: true,
 	}
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		log.Printf("auth logout: %v", err)
 		return Response{
 			Code:  http.StatusInternalServerError,
 			Error: ErrInternal,
 		}
 	}
+	return Response{
+		Code: http.StatusOK,
+	}
+}
+
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func V1Register(c echo.Context, req *RegisterRequest) Response {
+	repo := dao.GetRepo()
+	rows, err := repo.Reader().Query("SELECT id FROM users WHERE username = $1", req.Username)
+	if err != nil {
+		panic(err)
+	}
+	if rows.Next() {
+		return Response{
+			Code:  http.StatusBadRequest,
+			Error: ErrUserAlreadyExists,
+		}
+	}
+	repo.Writer().Exec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, encodeHash(req.Password))
 	return Response{
 		Code: http.StatusOK,
 	}

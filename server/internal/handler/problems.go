@@ -26,7 +26,7 @@ func V1GetProblems(c echo.Context, req *V1GetProblemsRequest) Response {
 		req.Page = 1
 	}
 	rows, err := repo.Reader().Query(
-		"SELECT id, title FROM problem LIMIT $1 OFFSET $2",
+		"SELECT id, title FROM problems LIMIT $1 OFFSET $2",
 		req.Size,
 		(req.Page-1)*req.Size,
 	)
@@ -62,7 +62,7 @@ type Problem struct {
 func V1GetProblem(c echo.Context, _ *struct{}) Response {
 	repo := dao.GetRepo()
 	id := c.Param("id")
-	rows, err := repo.Reader().Query("SELECT id, title, description, spoiler, time_limit, memory_limit FROM problem WHERE id = $1", id)
+	rows, err := repo.Reader().Query("SELECT id, title, description, spoiler, time_limit, memory_limit FROM problems WHERE id = $1", id)
 
 	if err != nil {
 		panic(err)
