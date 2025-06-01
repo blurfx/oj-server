@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/blurfx/fxoj/internal/dao"
+	"github.com/blurfx/fxoj/internal/datasource/postgres"
+	"github.com/blurfx/fxoj/internal/handler"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/orderoutofchaos/oj-server/internal/dao"
-	"github.com/orderoutofchaos/oj-server/internal/datasource/postgres"
-	"github.com/orderoutofchaos/oj-server/internal/handler"
 )
 
 func main() {

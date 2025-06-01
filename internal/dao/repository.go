@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"github.com/orderoutofchaos/oj-server/pkg/sq"
+	"github.com/blurfx/fxoj/pkg/sq"
 )
 
 var repo Repository

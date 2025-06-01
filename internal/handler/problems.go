@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
+	"github.com/blurfx/fxoj/internal/dao"
 	"github.com/labstack/echo/v4"
-	"github.com/orderoutofchaos/oj-server/internal/dao"
 )
 
 type V1GetProblemsRequest struct {

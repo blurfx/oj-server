@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/blurfx/fxoj/pkg/sq"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/orderoutofchaos/oj-server/pkg/sq"
 )
 
 type Config struct {

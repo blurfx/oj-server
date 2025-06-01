@@ -1,4 +1,4 @@
-module github.com/orderoutofchaos/oj-server
+module github.com/blurfx/fxoj
 
 go 1.23.0
 

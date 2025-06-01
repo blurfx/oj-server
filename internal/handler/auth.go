@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"net/http"
 
+	"github.com/blurfx/fxoj/internal/dao"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
-	"github.com/orderoutofchaos/oj-server/internal/dao"
 	"golang.org/x/crypto/scrypt"
 )
 
