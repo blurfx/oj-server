@@ -15,10 +15,21 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func main() {
-	if err := godotenv.Load(".env.local", ".env"); err != nil {
-		panic(err)
+func loadEnv() {
+	env := os.Getenv("FOO_ENV")
+	if "" == env {
+		env = "development"
 	}
+
+	if "test" != env {
+		godotenv.Load(".env.local")
+	}
+	godotenv.Load(".env." + env)
+	godotenv.Load()
+}
+
+func main() {
+	loadEnv()
 
 	readerConfig := postgres.Config{
 		User:   os.Getenv("READER_DB_USER"),

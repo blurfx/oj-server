@@ -89,7 +89,7 @@ func (r *Rows) ScanStruct(dest interface{}) error {
 	scanFields := make([]*field, len(columns))
 	for i, column := range columns {
 		field := r.fields[column]
-		scanFieldPtrs[i] = reflect.New(reflect.PtrTo(field.Type)).Interface()
+		scanFieldPtrs[i] = reflect.New(reflect.PointerTo(field.Type)).Interface()
 		scanFields[i] = field
 	}
 
