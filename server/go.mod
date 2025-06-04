@@ -7,6 +7,7 @@ toolchain go1.24.3
 require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/gorilla/sessions v1.4.0
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.4
@@ -31,7 +32,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/net v0.40.0 // indirect

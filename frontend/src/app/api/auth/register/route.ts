@@ -4,7 +4,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    console.log(process.env.NEXT_PUBLIC_API_URL);
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/auth/register`, {
       method: 'POST',
       headers: {

@@ -1,12 +1,11 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
-	"github.com/blurfx/fxoj/pkg/sq"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 type Config struct {
@@ -23,10 +22,10 @@ func (c *Config) FormatDSN() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", c.User, c.Passwd, c.Host, c.Port, c.DBName)
 }
 
-func NewPostgres(config Config) *sq.DB {
-	db, err := sql.Open("pgx", config.FormatDSN())
+func NewPostgres(config Config) *sqlx.DB {
+	db, err := sqlx.Open("pgx", config.FormatDSN())
 	if err != nil {
 		panic(err)
 	}
-	return sq.NewDb(db)
+	return db
 }

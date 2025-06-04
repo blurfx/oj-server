@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/hex"
 	"log"
 	"net/http"
 
 	"github.com/blurfx/fxoj/internal/dao"
+	"github.com/blurfx/fxoj/internal/model"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -26,51 +28,42 @@ func encodeHash(value string) string {
 
 func V1Login(c echo.Context, req *LoginRequest) Response {
 	repo := dao.GetRepo()
-	rows, err := repo.Reader().Query("SELECT id, username FROM users WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
+	var user model.User
+	err := repo.Reader().Get(&user, "SELECT id, username FROM users WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return Response{
+				Code:  http.StatusUnauthorized,
+				Error: ErrInvalidCredential,
+			}
+		}
 		panic(err)
 	}
 
-	var (
-		id       int64
-		username string
-	)
-	if rows.Next() {
-		err := rows.Scan(&id, &username)
-		if err != nil {
-			panic(err)
-		}
-
-		sess, err := session.Get("session", c)
-		if err != nil {
-			return Response{
-				Code:  http.StatusInternalServerError,
-				Error: ErrSession,
-			}
-		}
-		sess.Options = &sessions.Options{
-			Path:     "/",
-			MaxAge:   86400 * 7,
-			HttpOnly: true,
-		}
-		sess.Values["user_id"] = id
-		sess.Values["username"] = username
-		if err := sess.Save(c.Request(), c.Response()); err != nil {
-			log.Printf("auth login: %v", err)
-			return Response{
-				Code:  http.StatusInternalServerError,
-				Error: ErrInternal,
-			}
-		}
-
+	sess, err := session.Get("session", c)
+	if err != nil {
 		return Response{
-			Code: http.StatusOK,
+			Code:  http.StatusInternalServerError,
+			Error: ErrSession,
 		}
-	} else {
+	}
+	sess.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7,
+		HttpOnly: true,
+	}
+	sess.Values["user_id"] = user.ID
+	sess.Values["username"] = user.Username
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		log.Printf("auth login: %v", err)
 		return Response{
-			Code:  http.StatusUnauthorized,
-			Error: ErrInvalidCredential,
+			Code:  http.StatusInternalServerError,
+			Error: ErrInternal,
 		}
+	}
+
+	return Response{
+		Code: http.StatusOK,
 	}
 }
 
@@ -106,17 +99,19 @@ type RegisterRequest struct {
 
 func V1Register(c echo.Context, req *RegisterRequest) Response {
 	repo := dao.GetRepo()
-	rows, err := repo.Reader().Query("SELECT id FROM users WHERE username = $1", req.Username)
-	if err != nil {
-		panic(err)
-	}
-	if rows.Next() {
+	var user model.User
+	err := repo.Reader().Get(&user, "SELECT id FROM users WHERE username = $1", req.Username)
+	if err == nil {
 		return Response{
 			Code:  http.StatusBadRequest,
 			Error: ErrUserAlreadyExists,
 		}
 	}
-	repo.Writer().Exec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, encodeHash(req.Password))
+	if err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	repo.Writer().MustExec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, encodeHash(req.Password))
 	return Response{
 		Code: http.StatusOK,
 	}

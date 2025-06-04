@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/blurfx/fxoj/internal/dao"
+	"github.com/blurfx/fxoj/internal/model"
 	"github.com/labstack/echo/v4"
 )
 
@@ -12,9 +14,9 @@ type V1GetProblemsRequest struct {
 	Page uint `json:"page"`
 }
 
-type ProblemListItem struct {
-	ID    uint   `db:"id" json:"id"`
-	Title string `db:"title" json:"title"`
+type V1GetProblemsResponse struct {
+	ID    uint   `json:"id"`
+	Title string `json:"title"`
 }
 
 func V1GetProblems(c echo.Context, req *V1GetProblemsRequest) Response {
@@ -25,7 +27,9 @@ func V1GetProblems(c echo.Context, req *V1GetProblemsRequest) Response {
 	if req.Page == 0 {
 		req.Page = 1
 	}
-	rows, err := repo.Reader().Query(
+	problems := []model.Problem{}
+	err := repo.Reader().Select(
+		&problems,
 		"SELECT id, title FROM problems LIMIT $1 OFFSET $2",
 		req.Size,
 		(req.Page-1)*req.Size,
@@ -34,15 +38,17 @@ func V1GetProblems(c echo.Context, req *V1GetProblemsRequest) Response {
 		panic(err)
 	}
 
-	problems := make([]ProblemListItem, 0)
-	for rows.Next() {
-		var problem ProblemListItem
-		rows.ScanStruct(&problem)
-		problems = append(problems, problem)
+	data := make([]V1GetProblemsResponse, len(problems))
+	for i, problem := range problems {
+		data[i] = V1GetProblemsResponse{
+			ID:    problem.ID,
+			Title: problem.Title,
+		}
 	}
+
 	return Response{
 		Code: http.StatusOK,
-		Data: problems,
+		Data: data,
 	}
 }
 
@@ -50,39 +56,38 @@ type V1GetProblemRequest struct {
 	ID uint `json:"id"`
 }
 
-type Problem struct {
-	ID          uint   `db:"id" json:"id"`
-	Title       string `db:"title" json:"title"`
-	Description string `db:"description" json:"description"`
-	Spoiler     string `db:"spoiler" json:"spoiler"`
-	TimeLimit   uint   `db:"time_limit" json:"time_limit"`
-	MemoryLimit uint   `db:"memory_limit" json:"memory_limit"`
+type V1GetProblemResponse struct {
+	ID          uint   `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Spoiler     string `json:"spoiler"`
+	TimeLimit   uint   `json:"time_limit"`
+	MemoryLimit uint   `json:"memory_limit"`
 }
 
 func V1GetProblem(c echo.Context, _ *struct{}) Response {
 	repo := dao.GetRepo()
 	id := c.Param("id")
-	rows, err := repo.Reader().Query("SELECT id, title, description, spoiler, time_limit, memory_limit FROM problems WHERE id = $1", id)
-
+	problem := model.Problem{}
+	err := repo.Reader().Get(&problem, "SELECT id, title, description, spoiler, time_limit, memory_limit FROM problems WHERE id = $1", id)
 	if err != nil {
-		panic(err)
-	}
-
-	problems := make([]Problem, 0)
-	for rows.Next() {
-		var problem Problem
-		rows.ScanStruct(&problem)
-		problems = append(problems, problem)
-	}
-
-	if len(problems) == 0 {
-		return Response{
-			Code: http.StatusNotFound,
+		if err == sql.ErrNoRows {
+			return Response{
+				Code: http.StatusNotFound,
+			}
 		}
+		panic(err)
 	}
 
 	return Response{
 		Code: http.StatusOK,
-		Data: problems[0],
+		Data: V1GetProblemResponse{
+			ID:          problem.ID,
+			Title:       problem.Title,
+			Description: problem.Description,
+			Spoiler:     problem.Spoiler,
+			TimeLimit:   problem.TimeLimit,
+			MemoryLimit: problem.MemoryLimit,
+		},
 	}
 }

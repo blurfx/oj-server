@@ -1,30 +1,28 @@
 package dao
 
-import (
-	"github.com/blurfx/fxoj/pkg/sq"
-)
+import "github.com/jmoiron/sqlx"
 
 var repo Repository
 
 type Repository interface {
-	Writer() *sq.DB
-	Reader() *sq.DB
+	Writer() *sqlx.DB
+	Reader() *sqlx.DB
 }
 
 type repositoryImpl struct {
-	writer *sq.DB
-	reader *sq.DB
+	writer *sqlx.DB
+	reader *sqlx.DB
 }
 
-func (r repositoryImpl) Writer() *sq.DB {
+func (r repositoryImpl) Writer() *sqlx.DB {
 	return r.writer
 }
 
-func (r repositoryImpl) Reader() *sq.DB {
+func (r repositoryImpl) Reader() *sqlx.DB {
 	return r.reader
 }
 
-func InitRepo(reader *sq.DB, writer *sq.DB) {
+func InitRepo(reader *sqlx.DB, writer *sqlx.DB) {
 	repo = repositoryImpl{
 		writer: writer,
 		reader: reader,
