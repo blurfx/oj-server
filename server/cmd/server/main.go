@@ -4,28 +4,31 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blurfx/fxoj/internal/dao"
-	"github.com/blurfx/fxoj/internal/datasource/postgres"
-	"github.com/blurfx/fxoj/internal/handler"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/blurfx/fxoj/internal/dao"
+	"github.com/blurfx/fxoj/internal/datasource/postgres"
+	"github.com/blurfx/fxoj/internal/handler"
 )
 
 func loadEnv() {
 	env := os.Getenv("FOO_ENV")
-	if "" == env {
+	var err error
+	if env == "" {
 		env = "development"
 	}
 
-	if "test" != env {
-		godotenv.Load(".env.local")
+	if env != "test" {
+		err = godotenv.Load(".env.local") //nolint
+		panic(err)
 	}
-	godotenv.Load(".env." + env)
-	godotenv.Load()
+	godotenv.Load(".env." + env) //nolint
+	godotenv.Load()              //nolint
 }
 
 func main() {

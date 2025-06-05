@@ -6,12 +6,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/blurfx/fxoj/internal/dao"
-	"github.com/blurfx/fxoj/internal/model"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/scrypt"
+
+	"github.com/blurfx/fxoj/internal/dao"
+	"github.com/blurfx/fxoj/internal/model"
 )
 
 type LoginRequest struct {
@@ -29,7 +30,11 @@ func encodeHash(value string) string {
 func V1Login(c echo.Context, req *LoginRequest) Response {
 	repo := dao.GetRepo()
 	var user model.User
-	err := repo.Reader().Get(&user, "SELECT id, username FROM users WHERE username = $1 AND password = $2", req.Username, encodeHash(req.Password))
+	err := repo.Reader().Get(
+		&user,
+		"SELECT id, username FROM users WHERE username = $1 AND password = $2",
+		req.Username, encodeHash(req.Password),
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return Response{
@@ -100,7 +105,11 @@ type RegisterRequest struct {
 func V1Register(c echo.Context, req *RegisterRequest) Response {
 	repo := dao.GetRepo()
 	var user model.User
-	err := repo.Reader().Get(&user, "SELECT id FROM users WHERE username = $1", req.Username)
+	err := repo.Reader().Get(
+		&user,
+		"SELECT id FROM users WHERE username = $1",
+		req.Username,
+	)
 	if err == nil {
 		return Response{
 			Code:  http.StatusBadRequest,
@@ -111,7 +120,11 @@ func V1Register(c echo.Context, req *RegisterRequest) Response {
 		panic(err)
 	}
 
-	repo.Writer().MustExec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, encodeHash(req.Password))
+	repo.Writer().MustExec(
+		"INSERT INTO users (username, password) VALUES ($1, $2)",
+		req.Username,
+		encodeHash(req.Password),
+	)
 	return Response{
 		Code: http.StatusOK,
 	}

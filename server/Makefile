@@ -17,3 +17,15 @@ goose: load-env
 ifeq ($(env), $(filter $(env),local test))
 	goose -dir tools/migrations postgres "postgresql://$(WRITER_DB_USER):$(WRITER_DB_PASS)@$(WRITER_DB_HOST):$(WRITER_DB_PORT)/$(WRITER_DB_NAME)" $(c)
 endif
+
+new-migration:
+	goose -dir tools/migrations postgres "postgresql://$(WRITER_DB_USER):$(WRITER_DB_PASS)@$(WRITER_DB_HOST):$(WRITER_DB_PORT)/$(WRITER_DB_NAME)" create $(filter-out $@,$(MAKECMDGOALS)) sql
+
+lint:
+	golangci-lint run
+
+fix:
+	golangci-lint run --fix
+
+%:
+	@:

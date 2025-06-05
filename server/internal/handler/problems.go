@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/blurfx/fxoj/internal/dao"
 	"github.com/blurfx/fxoj/internal/model"
-	"github.com/labstack/echo/v4"
 )
 
 type V1GetProblemsRequest struct {
@@ -69,7 +70,11 @@ func V1GetProblem(c echo.Context, _ *struct{}) Response {
 	repo := dao.GetRepo()
 	id := c.Param("id")
 	problem := model.Problem{}
-	err := repo.Reader().Get(&problem, "SELECT id, title, description, spoiler, time_limit, memory_limit FROM problems WHERE id = $1", id)
+	err := repo.Reader().Get(
+		&problem,
+		"SELECT id, title, description, spoiler, time_limit, memory_limit FROM problems WHERE id = $1",
+		id,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return Response{
