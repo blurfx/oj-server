@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,23 +13,11 @@ import (
 	"github.com/blurfx/fxoj/internal/dao"
 	"github.com/blurfx/fxoj/internal/datasource/postgres"
 	"github.com/blurfx/fxoj/internal/handler"
+	"github.com/blurfx/fxoj/internal/utils"
 )
 
-func loadEnv() {
-	env := os.Getenv("ENV")
-	if env == "" {
-		env = "development"
-	}
-
-	if env != "test" {
-		godotenv.Load(".env.local") //nolint
-	}
-	godotenv.Load(".env." + env) //nolint
-	godotenv.Load()              //nolint
-}
-
 func main() {
-	loadEnv()
+	utils.LoadEnv()
 
 	readerConfig := postgres.Config{
 		User:   os.Getenv("READER_DB_USER"),

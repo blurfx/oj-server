@@ -27,5 +27,10 @@ func NewPostgres(config Config) *sqlx.DB {
 	if err != nil {
 		panic(err)
 	}
+
+	if err := db.Ping(); err != nil {
+		panic(err)
+	}
+
 	return db
 }
