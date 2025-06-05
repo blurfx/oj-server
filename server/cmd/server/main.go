@@ -17,15 +17,13 @@ import (
 )
 
 func loadEnv() {
-	env := os.Getenv("FOO_ENV")
-	var err error
+	env := os.Getenv("ENV")
 	if env == "" {
 		env = "development"
 	}
 
 	if env != "test" {
-		err = godotenv.Load(".env.local") //nolint
-		panic(err)
+		godotenv.Load(".env.local") //nolint
 	}
 	godotenv.Load(".env." + env) //nolint
 	godotenv.Load()              //nolint
